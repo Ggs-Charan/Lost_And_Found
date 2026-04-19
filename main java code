@@ -1,0 +1,175 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
+
+public class LostAndFoundPortal {
+
+    // Inner class with better encapsulation
+    static class Item {
+        private final int id;
+        private final String type;      // Lost or Found
+        private final String name;
+        private final String description;
+        private final String location;
+        private final String date;
+        private final String contact;
+        private String status;          // Open or Claimed
+
+        Item(int id, String type, String name, String description, String location, String date, String contact) {
+            this.id = id;
+            this.type = type;
+            this.name = name;
+            this.description = description;
+            this.location = location;
+            this.date = date;
+            this.contact = contact;
+            this.status = "Open";
+        }
+
+        // Getters for searching and display
+        public int getId() { return id; }
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+
+        @Override
+        public String toString() {
+            return String.format(
+                "\nID: %d | Type: %s | Status: [%s]\nItem: %s\nDesc: %s\nLoc: %s | Date: %s\nContact: %s\n-----------------------",
+                id, type, status, name, description, location, date, contact
+            );
+        }
+
+        public boolean matches(String keyword) {
+            String k = keyword.toLowerCase();
+            return name.toLowerCase().contains(k) || 
+                   description.toLowerCase().contains(k) || 
+                   location.toLowerCase().contains(k);
+        }
+    }
+
+    // Using a Map for O(1) ID lookups, but keeping a list for order if needed
+    static Map<Integer, Item> itemsMap = new HashMap<>();
+    static Scanner sc = new Scanner(System.in);
+    static int nextId = 1;
+
+    public static void main(String[] args) {
+        // Pre-fill sample data
+        addItemToSystem("Lost", "Wallet", "Black leather wallet", "Library", "2026-03-31", "9876543210");
+        addItemToSystem("Found", "Water Bottle", "Blue steel bottle", "Cafeteria", "2026-03-30", "9123456780");
+
+        boolean running = true;
+        while (running) {
+            printMenu();
+            int choice = readInt();
+
+            switch (choice) {
+                case 1 -> addItem("Lost");
+                case 2 -> addItem("Found");
+                case 3 -> viewAllItems();
+                case 4 -> searchItem();
+                case 5 -> markClaimed();
+                case 6 -> deleteItem();
+                case 7 -> {
+                    System.out.println("Exiting portal. Goodbye.");
+                    running = false;
+                }
+                default -> System.out.println("Invalid choice. Try again.\n");
+            }
+        }
+        sc.close();
+    }
+
+    private static void printMenu() {
+        System.out.println("\n=================================");
+        System.out.println("    LOST & FOUND MANAGEMENT");
+        System.out.println("=================================");
+        System.out.println("1. Report Lost Item");
+        System.out.println("2. Report Found Item");
+        System.out.println("3. View All Items");
+        System.out.println("4. Search Item");
+        System.out.println("5. Mark Item as Claimed");
+        System.out.println("6. Delete Item");
+        System.out.println("7. Exit");
+        System.out.print("Enter your choice: ");
+    }
+
+    static void addItem(String type) {
+        System.out.println("\n--- Report " + type + " Item ---");
+        System.out.print("Enter item name: ");
+        String name = sc.nextLine();
+        System.out.print("Enter description: ");
+        String description = sc.nextLine();
+        System.out.print("Enter location: ");
+        String location = sc.nextLine();
+        System.out.print("Enter date (YYYY-MM-DD): ");
+        String date = sc.nextLine();
+        System.out.print("Enter contact info: ");
+        String contact = sc.nextLine();
+
+        addItemToSystem(type, name, description, location, date, contact);
+        System.out.println(type + " item reported successfully with ID: " + (nextId - 1) + "\n");
+    }
+
+    // Helper to abstract the logic of adding
+    static void addItemToSystem(String type, String name, String desc, String loc, String date, String contact) {
+        Item item = new Item(nextId, type, name, desc, loc, date, contact);
+        itemsMap.put(nextId++, item);
+    }
+
+    static void viewAllItems() {
+        System.out.println("\n--- Current Inventory ---");
+        if (itemsMap.isEmpty()) {
+            System.out.println("No items available.\n");
+            return;
+        }
+        itemsMap.values().forEach(System.out::println);
+    }
+
+    static void searchItem() {
+        System.out.print("\nEnter keyword to search: ");
+        String keyword = sc.nextLine();
+
+        boolean found = false;
+        for (Item item : itemsMap.values()) {
+            if (item.matches(keyword)) {
+                System.out.println(item);
+                found = true;
+            }
+        }
+        if (!found) System.out.println("No matching items found.");
+    }
+
+    static void markClaimed() {
+        System.out.print("\nEnter item ID to mark as claimed: ");
+        int id = readInt();
+
+        if (itemsMap.containsKey(id)) {
+            itemsMap.get(id).setStatus("Claimed");
+            System.out.println("Status updated to Claimed.");
+        } else {
+            System.out.println("Item ID not found.");
+        }
+    }
+
+    static void deleteItem() {
+        System.out.print("\nEnter item ID to delete: ");
+        int id = readInt();
+
+        if (itemsMap.remove(id) != null) {
+            System.out.println("Item deleted successfully.");
+        } else {
+            System.out.println("Item ID not found.");
+        }
+    }
+
+    static int readInt() {
+        while (true) {
+            try {
+                return Integer.parseInt(sc.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.print("Invalid input. Please enter a number: ");
+            }
+        }
+    }
+}
